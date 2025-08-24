@@ -7,6 +7,12 @@
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; background: #fafafa; }
     h1 { text-align: center; }
+    nav { text-align: center; margin-bottom: 20px; }
+    nav a {
+      margin: 0 10px; text-decoration: none; color: #333;
+      font-weight: bold;
+    }
+    nav a:hover { color: #ff4081; }
     form { margin-bottom: 20px; }
     input, button { margin: 5px 0; padding: 8px; width: 100%; }
     .product-list { margin-top: 20px; }
@@ -21,6 +27,15 @@
 </head>
 <body>
   <h1>Manage Products</h1>
+
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="cart.html">Cart</a>
+    <a href="upload.html">Upload</a>
+    <a href="login.html">Login</a>
+    <a href="signup.html">Signup</a>
+  </nav>
+
   <form id="uploadForm">
     <input type="text" id="name" placeholder="Product Name" required>
     <input type="number" id="price" placeholder="Price" required>
@@ -78,4 +93,4 @@
     renderProducts();
   </script>
 </body>
-</html>
+</html>u
