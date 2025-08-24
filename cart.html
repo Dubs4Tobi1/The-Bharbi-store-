@@ -118,6 +118,7 @@
       if (cart.length === 0) {
         cartList.innerHTML = "<p>Your cart is empty.</p>";
         totalPrice.textContent = "0";
+        localStorage.setItem("total", 0);
         return;
       }
 
@@ -137,6 +138,8 @@
       });
 
       totalPrice.textContent = total;
+      // store total in localStorage so checkout.html can read it
+      localStorage.setItem("total", total);
       updateCartCount();
     }
 
@@ -151,11 +154,10 @@
         alert("Your cart is empty!");
         return;
       }
-      // Save cart & total for checkout page
+      // Keep cart and total in localStorage and go to checkout
       localStorage.setItem("cart", JSON.stringify(cart));
       const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
       localStorage.setItem("total", total);
-      // Redirect to checkout.html
       window.location.href = "checkout.html";
     }
 
