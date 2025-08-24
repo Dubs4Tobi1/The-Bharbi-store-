@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Cart - The Bharbi Store</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #fafafa;
+      margin: 0;
+    }
+    header {
+      background: #000;
+      color: #fff;
+      padding: 1rem;
+      text-align: center;
+    }
+    header h1 { font-size: 1.6rem; margin-bottom: 0.3rem; }
+    nav a {
+      color: #fff;
+      margin: 0 0.8rem;
+      text-decoration: none;
+    }
+    nav a:hover { color: #f5a623; }
+
+    main { padding: 1rem; }
+    .cart-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fff;
+      margin: 0.5rem 0;
+      padding: 0.8rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .cart-item img {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+    .cart-info {
+      flex: 1;
+      margin-left: 1rem;
+    }
+    .cart-info h3 { font-size: 1rem; margin: 0; }
+    .cart-info p { font-size: 0.9rem; color: #555; }
+
+    button {
+      background: #f5a623;
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+    }
+    button:hover { background: #d48806; }
+
+    .checkout {
+      margin-top: 1rem;
+      text-align: right;
+    }
+    .checkout button {
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+    }
+    footer {
+      text-align: center;
+      background: #000;
+      color: #fff;
+      padding: 1rem;
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Your Cart</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="cart.html">Cart (<span id="cart-count">0</span>)</a>
+      <a href="upload.html">Upload</a>
+      <a href="login.html">Login</a>
+      <a href="signup.html">Sign Up</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Items in your cart</h2>
+    <div id="cart-list"></div>
+    <div class="checkout">
+      <h3>Total: ₦<span id="total-price">0</span></h3>
+      <button onclick="checkout()">Checkout</button>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 The Bharbi Store</p>
+  </footer>
+
+  <script>
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+    function updateCartCount() {
+      document.querySelectorAll("#cart-count").forEach(el => {
+        el.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+      });
+    }
+
+    function renderCart() {
+      const cartList = document.getElementById("cart-list");
+      const totalPrice = document.getElementById("total-price");
+      cartList.innerHTML = "";
+      let total = 0;
+
+      if (cart.length === 0) {
+        cartList.innerHTML = "<p>Your cart is empty.</p>";
+        totalPrice.textContent = "0";
+        return;
+      }
+
+      cart.forEach((item, index) => {
+        total += item.price * item.quantity;
+        const div = document.createElement("div");
+        div.className = "cart-item";
+        div.innerHTML = `
+          <img src="${item.image}" alt="${item.name}">
+          <div class="cart-info">
+            <h3>${item.name} ×${item.quantity}</h3>
+            <p>₦${item.price} each</p>
+          </div>
+          <button onclick="removeItem(${index})">Remove</button>
+        `;
+        cartList.appendChild(div);
+      });
+
+      totalPrice.textContent = total;
+      updateCartCount();
+    }
+
+    function removeItem(index) {
+      cart.splice(index, 1);
+      localStorage.setItem("cart", JSON.stringify(cart));
+      renderCart();
+    }
+
+    function checkout() {
+      if (cart.length === 0) {
+        alert("Your cart is empty!");
+        return;
+      }
+      alert("Order sent! (This will later be linked to Paystack / Email / WhatsApp)");
+      cart = [];
+      localStorage.setItem("cart", JSON.stringify(cart));
+      renderCart();
+    }
+
+    renderCart();
+    updateCartCount();
+  </script>
+</body>
+</html>
