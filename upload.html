@@ -3,47 +3,81 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Upload Products - Bharbi Store</title>
+  <title>Upload Products - The Bharbi Store</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #fafafa; }
-    h1 { text-align: center; }
-    nav { text-align: center; margin-bottom: 20px; }
-    nav a {
-      margin: 0 10px; text-decoration: none; color: #333;
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #fafafa;
+    }
+    header {
+      margin-bottom: 20px;
+    }
+    a {
+      text-decoration: none;
+      color: #444;
       font-weight: bold;
+      margin-right: 15px;
     }
-    nav a:hover { color: #ff4081; }
-    form { margin-bottom: 20px; }
-    input, button { margin: 5px 0; padding: 8px; width: 100%; }
-    .product-list { margin-top: 20px; }
-    .product-item {
-      border: 1px solid #ddd; padding: 10px; margin: 10px 0;
-      display: flex; justify-content: space-between; align-items: center;
-      background: #fff; border-radius: 8px;
+    form {
+      margin-bottom: 20px;
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-    .hidden { opacity: 0.5; }
-    button { cursor: pointer; }
+    input, button {
+      margin: 5px 0;
+      padding: 8px;
+      width: 100%;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: black;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #444;
+    }
+    .product {
+      padding: 10px;
+      margin: 5px 0;
+      background: #eee;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .product img {
+      max-width: 60px;
+      border-radius: 6px;
+      margin-right: 10px;
+    }
+    .controls button {
+      margin-left: 5px;
+      font-size: 12px;
+      padding: 5px 8px;
+    }
   </style>
 </head>
 <body>
-  <h1>Manage Products</h1>
+  <header>
+    <a href="index.html">🏠 Home</a>
+  </header>
 
-  <nav>
-    <a href="index.html">Home</a>
-    <a href="cart.html">Cart</a>
-    <a href="upload.html">Upload</a>
-    <a href="login.html">Login</a>
-    <a href="signup.html">Signup</a>
-  </nav>
+  <h1>Upload Products</h1>
 
   <form id="uploadForm">
-    <input type="text" id="name" placeholder="Product Name" required>
+    <input type="text" id="name" placeholder="Product name" required>
     <input type="number" id="price" placeholder="Price" required>
     <input type="file" id="imageFile" accept="image/*">
     <button type="submit">Add Product</button>
   </form>
 
-  <div class="product-list" id="productList"></div>
+  <h2>Manage Products</h2>
+  <div id="productList"></div>
 
   <script>
     let products = JSON.parse(localStorage.getItem("products")) || [];
@@ -53,27 +87,19 @@
       list.innerHTML = "";
       products.forEach((p, i) => {
         const div = document.createElement("div");
-        div.className = "product-item" + (p.hidden ? " hidden" : "");
+        div.className = "product";
         div.innerHTML = `
-          <span><b>${p.name}</b> - ₦${p.price}</span>
-          <div>
+          <div style="display:flex; align-items:center;">
+            <img src="${p.imageUrl}" alt="${p.name}">
+            <span>${p.name} - ₦${p.price} ${p.hidden ? "(Hidden)" : ""}</span>
+          </div>
+          <div class="controls">
             <button onclick="toggleHide(${i})">${p.hidden ? "Unhide" : "Hide"}</button>
             <button onclick="removeProduct(${i})">Remove</button>
           </div>
         `;
         list.appendChild(div);
       });
-      localStorage.setItem("products", JSON.stringify(products));
-    }
-
-    function removeProduct(index) {
-      products.splice(index, 1);
-      renderProducts();
-    }
-
-    function toggleHide(index) {
-      products[index].hidden = !products[index].hidden;
-      renderProducts();
     }
 
     document.getElementById("uploadForm").addEventListener("submit", function(e) {
@@ -81,16 +107,38 @@
       const name = document.getElementById("name").value;
       const price = document.getElementById("price").value;
       const imageFile = document.getElementById("imageFile").files[0];
-      let imageUrl = "";
+
       if (imageFile) {
-        imageUrl = URL.createObjectURL(imageFile);
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const imageUrl = event.target.result; // Base64 string
+          products.push({ name, price, imageUrl, hidden: false });
+          localStorage.setItem("products", JSON.stringify(products));
+          renderProducts();
+        };
+        reader.readAsDataURL(imageFile);
+      } else {
+        products.push({ name, price, imageUrl: "", hidden: false });
+        localStorage.setItem("products", JSON.stringify(products));
+        renderProducts();
       }
-      products.push({ name, price, imageUrl, hidden: false });
+
       this.reset();
-      renderProducts();
     });
+
+    function toggleHide(i) {
+      products[i].hidden = !products[i].hidden;
+      localStorage.setItem("products", JSON.stringify(products));
+      renderProducts();
+    }
+
+    function removeProduct(i) {
+      products.splice(i, 1);
+      localStorage.setItem("products", JSON.stringify(products));
+      renderProducts();
+    }
 
     renderProducts();
   </script>
 </body>
-</html>u
+</html>
