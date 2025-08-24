@@ -61,7 +61,7 @@
   if(cart.length === 0){
     cartList.innerHTML = "<p>Your cart is empty.</p>";
   } else {
-    cart.forEach((item,index)=>{
+    cart.forEach((item)=>{
       const div = document.createElement("div");
       div.className = "cart-item";
       div.innerHTML = `
@@ -89,7 +89,7 @@
 
     const emailParams = {
       to_email: "tfemiasoro@gmail.com",
-      message: `Order Details:\n\n${itemsText}\n\nTotal: ₦${total}\n\n${proofText}`
+      message: `Order Details:\n\n${itemsText}\n\nTotal: ₦${total}\n\n${proofText}\n\nBank Details:\nBank: UBA\nAccount Name: Itunuoluwa Comfort Femi-Asoro\nAccount No: 2242094371`
     };
 
     emailjs.send("YOUR_SERVICE_ID","YOUR_TEMPLATE_ID",emailParams)
