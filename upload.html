@@ -3,195 +3,78 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Upload Products - The Bharbi Store</title>
+  <title>Upload Products - Bharbi Store</title>
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: #fafafa;
-      margin: 0;
-    }
-    header {
-      background: #000;
-      color: #fff;
-      padding: 1rem;
-      text-align: center;
-    }
-    nav a {
-      color: #fff;
-      margin: 0 0.8rem;
-      text-decoration: none;
-    }
-    nav a:hover { color: #f5a623; }
-
-    main { padding: 1rem; }
-    form {
-      background: #fff;
-      padding: 1rem;
-      border-radius: 10px;
-      max-width: 400px;
-      margin: auto;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    form input {
-      width: 100%;
-      padding: 0.6rem;
-      margin: 0.5rem 0;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-    form button {
-      background: #f5a623;
-      border: none;
-      padding: 0.8rem;
-      border-radius: 8px;
-      color: #fff;
-      cursor: pointer;
-      width: 100%;
-    }
-    form button:hover { background: #d48806; }
-
-    .product-list {
-      margin-top: 2rem;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; background: #fafafa; }
+    h1 { text-align: center; }
+    form { margin-bottom: 20px; }
+    input, button { margin: 5px 0; padding: 8px; width: 100%; }
+    .product-list { margin-top: 20px; }
     .product-item {
-      background: #fff;
-      padding: 1rem;
-      margin: 0.5rem 0;
-      border-radius: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border: 1px solid #ddd; padding: 10px; margin: 10px 0;
+      display: flex; justify-content: space-between; align-items: center;
+      background: #fff; border-radius: 8px;
     }
-    .product-item button {
-      margin-left: 0.5rem;
-      padding: 0.4rem 0.8rem;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .delete-btn { background: red; color: #fff; }
-    .toggle-btn { background: #f5a623; color: #fff; }
-    footer {
-      text-align: center;
-      background: #000;
-      color: #fff;
-      padding: 1rem;
-      margin-top: 2rem;
-    }
+    .hidden { opacity: 0.5; }
+    button { cursor: pointer; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Upload Products</h1>
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="cart.html">Cart (<span id="cart-count">0</span>)</a>
-      <a href="upload.html">Upload</a>
-      <a href="login.html">Login</a>
-      <a href="signup.html">Sign Up</a>
-    </nav>
-  </header>
+  <h1>Manage Products</h1>
+  <form id="uploadForm">
+    <input type="text" id="name" placeholder="Product Name" required>
+    <input type="number" id="price" placeholder="Price" required>
+    <input type="file" id="imageFile" accept="image/*">
+    <button type="submit">Add Product</button>
+  </form>
 
-  <main>
-    <form id="uploadForm">
-      <h2>Add a New Product</h2>
-      <input type="text" id="name" placeholder="Product Name" required>
-      <input type="number" id="price" placeholder="Price" required>
-      <input type="url" id="imageUrl" placeholder="Image URL">
-      <input type="file" id="imageFile" accept="image/*">
-      <button type="submit">Upload</button>
-    </form>
-
-    <div class="product-list" id="productList"></div>
-  </main>
-
-  <footer>
-    <p>&copy; 2025 The Bharbi Store</p>
-  </footer>
+  <div class="product-list" id="productList"></div>
 
   <script>
-    let cart = JSON.parse(localStorage.getItem("cart")) || [];
     let products = JSON.parse(localStorage.getItem("products")) || [];
 
-    function updateCartCount() {
-      document.querySelectorAll("#cart-count").forEach(el => {
-        el.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+    function renderProducts() {
+      const list = document.getElementById("productList");
+      list.innerHTML = "";
+      products.forEach((p, i) => {
+        const div = document.createElement("div");
+        div.className = "product-item" + (p.hidden ? " hidden" : "");
+        div.innerHTML = `
+          <span><b>${p.name}</b> - ₦${p.price}</span>
+          <div>
+            <button onclick="toggleHide(${i})">${p.hidden ? "Unhide" : "Hide"}</button>
+            <button onclick="removeProduct(${i})">Remove</button>
+          </div>
+        `;
+        list.appendChild(div);
       });
+      localStorage.setItem("products", JSON.stringify(products));
+    }
+
+    function removeProduct(index) {
+      products.splice(index, 1);
+      renderProducts();
+    }
+
+    function toggleHide(index) {
+      products[index].hidden = !products[index].hidden;
+      renderProducts();
     }
 
     document.getElementById("uploadForm").addEventListener("submit", function(e) {
       e.preventDefault();
       const name = document.getElementById("name").value;
       const price = document.getElementById("price").value;
-      const urlInput = document.getElementById("imageUrl").value;
-      const fileInput = document.getElementById("imageFile").files[0];
-
-      let newProduct = {
-        id: Date.now(),
-        name,
-        price,
-        image: "",
-        inStock: true
-      };
-
-      if (urlInput) {
-        newProduct.image = urlInput;
-        saveProduct(newProduct);
-      } else if (fileInput) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-          newProduct.image = event.target.result;
-          saveProduct(newProduct);
-        };
-        reader.readAsDataURL(fileInput);
+      const imageFile = document.getElementById("imageFile").files[0];
+      let imageUrl = "";
+      if (imageFile) {
+        imageUrl = URL.createObjectURL(imageFile);
       }
+      products.push({ name, price, imageUrl, hidden: false });
+      this.reset();
+      renderProducts();
     });
 
-    function saveProduct(product) {
-      products.push(product);
-      localStorage.setItem("products", JSON.stringify(products));
-      renderProducts();
-      document.getElementById("uploadForm").reset();
-    }
-
-    function renderProducts() {
-      const productList = document.getElementById("productList");
-      productList.innerHTML = "";
-      products.forEach((product, index) => {
-        let div = document.createElement("div");
-        div.className = "product-item";
-        div.innerHTML = `
-          <span>${product.name} - ₦${product.price} 
-            ${product.inStock ? "" : "(Hidden)"}
-          </span>
-          <div>
-            <button class="toggle-btn" onclick="toggleProduct(${index})">
-              ${product.inStock ? "Hide" : "Show"}
-            </button>
-            <button class="delete-btn" onclick="deleteProduct(${index})">Delete</button>
-          </div>
-        `;
-        productList.appendChild(div);
-      });
-    }
-
-    function toggleProduct(index) {
-      products[index].inStock = !products[index].inStock;
-      localStorage.setItem("products", JSON.stringify(products));
-      renderProducts();
-    }
-
-    function deleteProduct(index) {
-      products.splice(index, 1);
-      localStorage.setItem("products", JSON.stringify(products));
-      renderProducts();
-    }
-
-    updateCartCount();
     renderProducts();
   </script>
 </body>
