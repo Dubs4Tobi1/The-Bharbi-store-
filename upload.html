@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Upload Product - The Bharbi Store</title>
+  <title>Upload Products - The Bharbi Store</title>
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -16,7 +16,6 @@
       padding: 1rem;
       text-align: center;
     }
-    header h1 { font-size: 1.6rem; margin-bottom: 0.3rem; }
     nav a {
       color: #fff;
       margin: 0 0.8rem;
@@ -33,13 +32,12 @@
       margin: auto;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-    form input, form textarea {
+    form input {
       width: 100%;
       padding: 0.6rem;
       margin: 0.5rem 0;
       border: 1px solid #ccc;
       border-radius: 8px;
-      font-size: 1rem;
     }
     form button {
       background: #f5a623;
@@ -49,10 +47,34 @@
       color: #fff;
       cursor: pointer;
       width: 100%;
-      font-size: 1rem;
     }
     form button:hover { background: #d48806; }
 
+    .product-list {
+      margin-top: 2rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .product-item {
+      background: #fff;
+      padding: 1rem;
+      margin: 0.5rem 0;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .product-item button {
+      margin-left: 0.5rem;
+      padding: 0.4rem 0.8rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .delete-btn { background: red; color: #fff; }
+    .toggle-btn { background: #f5a623; color: #fff; }
     footer {
       text-align: center;
       background: #000;
@@ -64,7 +86,7 @@
 </head>
 <body>
   <header>
-    <h1>Upload Product</h1>
+    <h1>Upload Products</h1>
     <nav>
       <a href="index.html">Home</a>
       <a href="cart.html">Cart (<span id="cart-count">0</span>)</a>
@@ -76,18 +98,15 @@
 
   <main>
     <form id="uploadForm">
-      <h2>Add New Product</h2>
+      <h2>Add a New Product</h2>
       <input type="text" id="name" placeholder="Product Name" required>
-      <input type="number" id="price" placeholder="Price (₦)" required>
-      <textarea id="description" placeholder="Description"></textarea>
-      
-      <p><b>Upload Image:</b></p>
-      <input type="file" id="imageFile" accept="image/*">
-      <p style="text-align:center;">— OR —</p>
+      <input type="number" id="price" placeholder="Price" required>
       <input type="url" id="imageUrl" placeholder="Image URL">
-
+      <input type="file" id="imageFile" accept="image/*">
       <button type="submit">Upload</button>
     </form>
+
+    <div class="product-list" id="productList"></div>
   </main>
 
   <footer>
@@ -96,6 +115,7 @@
 
   <script>
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    let products = JSON.parse(localStorage.getItem("products")) || [];
 
     function updateCartCount() {
       document.querySelectorAll("#cart-count").forEach(el => {
@@ -106,33 +126,73 @@
     document.getElementById("uploadForm").addEventListener("submit", function(e) {
       e.preventDefault();
       const name = document.getElementById("name").value;
-      const price = parseFloat(document.getElementById("price").value);
-      const description = document.getElementById("description").value;
-      const file = document.getElementById("imageFile").files[0];
+      const price = document.getElementById("price").value;
       const urlInput = document.getElementById("imageUrl").value;
+      const fileInput = document.getElementById("imageFile").files[0];
 
-      let reader = new FileReader();
-      if (file) {
-        reader.readAsDataURL(file);
-        reader.onload = function() {
-          saveProduct(name, price, description, reader.result);
-        }
-      } else if (urlInput) {
-        saveProduct(name, price, description, urlInput);
-      } else {
-        alert("Please upload an image or paste an image URL.");
+      let newProduct = {
+        id: Date.now(),
+        name,
+        price,
+        image: "",
+        inStock: true
+      };
+
+      if (urlInput) {
+        newProduct.image = urlInput;
+        saveProduct(newProduct);
+      } else if (fileInput) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          newProduct.image = event.target.result;
+          saveProduct(newProduct);
+        };
+        reader.readAsDataURL(fileInput);
       }
     });
 
-    function saveProduct(name, price, description, image) {
-      let products = JSON.parse(localStorage.getItem("products")) || [];
-      products.push({ name, price, description, image });
+    function saveProduct(product) {
+      products.push(product);
       localStorage.setItem("products", JSON.stringify(products));
-      alert("Product uploaded successfully!");
-      window.location.href = "index.html"; // go back to home
+      renderProducts();
+      document.getElementById("uploadForm").reset();
+    }
+
+    function renderProducts() {
+      const productList = document.getElementById("productList");
+      productList.innerHTML = "";
+      products.forEach((product, index) => {
+        let div = document.createElement("div");
+        div.className = "product-item";
+        div.innerHTML = `
+          <span>${product.name} - ₦${product.price} 
+            ${product.inStock ? "" : "(Hidden)"}
+          </span>
+          <div>
+            <button class="toggle-btn" onclick="toggleProduct(${index})">
+              ${product.inStock ? "Hide" : "Show"}
+            </button>
+            <button class="delete-btn" onclick="deleteProduct(${index})">Delete</button>
+          </div>
+        `;
+        productList.appendChild(div);
+      });
+    }
+
+    function toggleProduct(index) {
+      products[index].inStock = !products[index].inStock;
+      localStorage.setItem("products", JSON.stringify(products));
+      renderProducts();
+    }
+
+    function deleteProduct(index) {
+      products.splice(index, 1);
+      localStorage.setItem("products", JSON.stringify(products));
+      renderProducts();
     }
 
     updateCartCount();
+    renderProducts();
   </script>
 </body>
 </html>
