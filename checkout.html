@@ -1,121 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            max-width: 800px;
-            margin: 40px auto;
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            text-align: center;
-        }
-        .cart-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #ccc;
-        }
-        .total {
-            font-weight: bold;
-            font-size: 1.2em;
-            text-align: right;
-            margin-top: 10px;
-        }
-        .bank-details, .payment-proof {
-            margin-top: 30px;
-        }
-        label {
-            display: block;
-            margin-top: 10px;
-        }
-        input[type="file"] {
-            margin-top: 10px;
-        }
-        button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #28a745;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #218838;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkout - The Bharbi Store</title>
+<style>
+  body { font-family: 'Poppins', sans-serif; background: #fafafa; margin:0; }
+  header { background: #000; color: #fff; padding:1rem; text-align:center; }
+  main { max-width: 800px; margin:auto; padding:1rem; }
+  .cart-item { display:flex; justify-content:space-between; background:#fff; margin:0.5rem 0; padding:0.8rem; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+  .cart-info { flex:1; margin-left:1rem; }
+  .cart-info h3{ margin:0; }
+  .done-btn { margin-top:1rem; padding:0.6rem 1.2rem; font-size:1rem; background:#f5a623; border:none; color:#fff; border-radius:8px; cursor:pointer; }
+  .done-btn:hover { background:#d48806; }
+  a { display:inline-block; margin-top:1rem; text-decoration:none; color:#007bff; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>Checkout</h1>
+<header>
+  <h1>Checkout</h1>
+  <a href="cart.html">Back to Cart</a>
+</header>
 
-        <div id="cart-items">
-            <!-- Cart items will be displayed here -->
+<main>
+  <h2>Items in your cart</h2>
+  <div id="cart-list"></div>
+  <h3>Total: ₦<span id="total-price">0</span></h3>
+  <button class="done-btn" onclick="sendOrder()">Done</button>
+</main>
+
+<script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+<script>
+  emailjs.init("YOUR_EMAILJS_USER_ID"); // replace with your EmailJS User ID
+
+  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+  let total = Number(localStorage.getItem("total")) || 0;
+
+  const cartList = document.getElementById("cart-list");
+  const totalPrice = document.getElementById("total-price");
+  totalPrice.textContent = total;
+
+  if(cart.length === 0) {
+    cartList.innerHTML = "<p>Your cart is empty.</p>";
+  } else {
+    cart.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "cart-item";
+      div.innerHTML = `
+        <div class="cart-info">
+          <h3>${item.name} ×${item.quantity}</h3>
+          <p>₦${item.price} each</p>
         </div>
+        <p>₦${item.price * item.quantity}</p>
+      `;
+      cartList.appendChild(div);
+    });
+  }
 
-        <div class="total">
-            Total: ₦<span id="total-price">0</span>
-        </div>
+  function sendOrder() {
+    if(cart.length === 0) {
+      alert("Cart is empty!");
+      return;
+    }
 
-        <div class="bank-details">
-            <h2>Bank Details</h2>
-            <p>Bank Name: <strong>UBA</strong></p>
-            <p>Account Name: <strong>Itunuoluwa Comfort Femi-Asoro</strong></p>
-            <p>Account Number: <strong>2242094371</strong></p>
-        </div>
+    const itemsText = cart.map(item => `${item.name} ×${item.quantity} = ₦${item.price * item.quantity}`).join("\n");
+    const emailParams = {
+      to_email: "tfemiasoro@gmail.com",
+      message: `Order Details:\n\n${itemsText}\n\nTotal: ₦${total}`
+    };
 
-        <div class="payment-proof">
-            <h2>Upload Proof of Payment</h2>
-            <form id="payment-form">
-                <label for="proof">Choose a file:</label>
-                <input type="file" id="proof" name="proof" accept="image/*" required>
-                <button type="submit">OK</button>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        // Example cart data (replace with your cart logic)
-        const cart = [
-            { name: "Item 1", price: 2500 },
-            { name: "Item 2", price: 3500 },
-            { name: "Item 3", price: 1500 }
-        ];
-
-        const cartContainer = document.getElementById('cart-items');
-        const totalPriceEl = document.getElementById('total-price');
-        let total = 0;
-
-        cart.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'cart-item';
-            div.innerHTML = `<span>${item.name}</span><span>₦${item.price}</span>`;
-            cartContainer.appendChild(div);
-            total += item.price;
-        });
-
-        totalPriceEl.textContent = total;
-
-        // Handle form submission
-        const form = document.getElementById('payment-form');
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            alert("Payment proof uploaded successfully!");
-            window.location.href = "index.html";
-        });
-    </script>
+    emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", emailParams)
+      .then(() => {
+        alert("Order sent successfully!");
+        // clear cart after sending
+        localStorage.removeItem("cart");
+        localStorage.removeItem("total");
+        window.location.href = "index.html";
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Failed to send order. Please try again.");
+      });
+  }
+</script>
 </body>
 </html>
