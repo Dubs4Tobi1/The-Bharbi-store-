@@ -4,101 +4,58 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Upload Products - The Bharbi Store</title>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #fafafa;
-    }
-    header {
-      margin-bottom: 20px;
-    }
-    a {
-      text-decoration: none;
-      color: #444;
-      font-weight: bold;
-      margin-right: 15px;
-    }
-    form {
-      margin-bottom: 20px;
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    input, button {
-      margin: 5px 0;
-      padding: 8px;
-      width: 100%;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-    button {
-      background: black;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #444;
-    }
-    .product {
-      padding: 10px;
-      margin: 5px 0;
-      background: #eee;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .product img {
-      max-width: 60px;
-      border-radius: 6px;
-      margin-right: 10px;
-    }
-    .controls button {
-      margin-left: 5px;
-      font-size: 12px;
-      padding: 5px 8px;
-    }
+    /* ...your existing styles here... */
   </style>
 </head>
 <body>
   <header>
     <a href="index.html">🏠 Home</a>
   </header>
-
   <h1>Upload Products</h1>
-
   <form id="uploadForm">
     <input type="text" id="name" placeholder="Product name" required>
     <input type="number" id="price" placeholder="Price" required>
     <input type="file" id="imageFile" accept="image/*">
     <button type="submit">Add Product</button>
   </form>
-
   <h2>Manage Products</h2>
   <div id="productList"></div>
-
   <script>
-    let products = JSON.parse(localStorage.getItem("products")) || [];
+    const firebaseConfig = {
+      apiKey: "AIzaSyD5-sq8L8Ufbzv4TA7L7iGN2l3QUu7aTqg",
+      authDomain: "the-bharbi-store.firebaseapp.com",
+      projectId: "the-bharbi-store",
+      storageBucket: "the-bharbi-store.firebasestorage.app",
+      messagingSenderId: "408548704915",
+      appId: "1:408548704915:web:b828a583e55433f9750366"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
     function renderProducts() {
-      const list = document.getElementById("productList");
-      list.innerHTML = "";
-      products.forEach((p, i) => {
-        const div = document.createElement("div");
-        div.className = "product";
-        div.innerHTML = `
-          <div style="display:flex; align-items:center;">
-            <img src="${p.imageUrl}" alt="${p.name}">
-            <span>${p.name} - ₦${p.price} ${p.hidden ? "(Hidden)" : ""}</span>
-          </div>
-          <div class="controls">
-            <button onclick="toggleHide(${i})">${p.hidden ? "Unhide" : "Hide"}</button>
-            <button onclick="removeProduct(${i})">Remove</button>
-          </div>
-        `;
-        list.appendChild(div);
+      db.collection("products").get().then(snapshot => {
+        const list = document.getElementById("productList");
+        list.innerHTML = "";
+        snapshot.forEach(doc => {
+          const p = doc.data();
+          const id = doc.id;
+          const div = document.createElement("div");
+          div.className = "product";
+          div.innerHTML = `
+            <div style="display:flex; align-items:center;">
+              <img src="${p.imageUrl}" alt="${p.name}" style="max-width:60px;">
+              <span>${p.name} - ₦${p.price} ${p.hidden ? "(Hidden)" : ""}</span>
+            </div>
+            <div class="controls">
+              <button onclick="toggleHide('${id}', ${!p.hidden})">${p.hidden ? "Unhide" : "Hide"}</button>
+              <button onclick="removeProduct('${id}')">Remove</button>
+            </div>
+          `;
+          list.appendChild(div);
+        });
       });
     }
 
@@ -111,31 +68,25 @@
       if (imageFile) {
         const reader = new FileReader();
         reader.onload = function(event) {
-          const imageUrl = event.target.result; // Base64 string
-          products.push({ name, price, imageUrl, hidden: false });
-          localStorage.setItem("products", JSON.stringify(products));
-          renderProducts();
+          const imageUrl = event.target.result;
+          db.collection("products").add({
+            name, price, imageUrl, hidden: false
+          }).then(renderProducts);
         };
         reader.readAsDataURL(imageFile);
       } else {
-        products.push({ name, price, imageUrl: "", hidden: false });
-        localStorage.setItem("products", JSON.stringify(products));
-        renderProducts();
+        db.collection("products").add({
+          name, price, imageUrl: "", hidden: false
+        }).then(renderProducts);
       }
-
       this.reset();
     });
 
-    function toggleHide(i) {
-      products[i].hidden = !products[i].hidden;
-      localStorage.setItem("products", JSON.stringify(products));
-      renderProducts();
+    function toggleHide(id, hide) {
+      db.collection("products").doc(id).update({ hidden: hide }).then(renderProducts);
     }
-
-    function removeProduct(i) {
-      products.splice(i, 1);
-      localStorage.setItem("products", JSON.stringify(products));
-      renderProducts();
+    function removeProduct(id) {
+      db.collection("products").doc(id).delete().then(renderProducts);
     }
 
     renderProducts();
