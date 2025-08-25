@@ -6,58 +6,101 @@
   <title>The Bharbi Store</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #fdfdfd;
-    }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px;
-      background: black;
-      color: white;
-    }
-    header h1 {
-      font-size: 20px;
-    }
-    nav a {
-      color: white;
-      text-decoration: none;
-      margin-left: 15px;
-      font-weight: bold;
-    }
-    .products {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      padding: 20px;
-    }
-    .product {
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    .product img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 8px;
-      margin-bottom: 10px;
-    }
-    button {
-      padding: 8px 12px;
-      border: none;
-      background: black;
-      color: white;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-    button:hover {
-      background: #444;
-    }
+  font-family: 'Poppins', Arial, sans-serif;
+  background: #fafafa;
+  margin: 0;
+  color: #222;
+}
+header {
+  background: #000;
+  color: #fff;
+  padding: 1rem;
+  text-align: center;
+}
+header nav {
+  margin-top: 0.5rem;
+}
+header nav a {
+  color: #f5a623;
+  text-decoration: none;
+  margin: 0 1rem;
+  font-weight: 500;
+}
+header nav a:hover {
+  text-decoration: underline;
+  color: #fff;
+}
+main {
+  max-width: 900px;
+  margin: auto;
+  padding: 1.5rem 1rem;
+}
+.products {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: center;
+}
+.product {
+  background: #fff;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+  width: 220px;
+  text-align: center;
+  position: relative;
+}
+.product img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #eee;
+}
+.product h3 {
+  margin: 0.5rem 0 0.2rem 0;
+  font-size: 1.1rem;
+}
+.product p {
+  color: #333;
+  margin: 0.2rem 0 0.5rem 0;
+}
+.product button {
+  margin-top: 0.5rem;
+  background: #f5a623;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.product button:hover {
+  background: #d48806;
+}
+footer {
+  background: #000;
+  color: #fff;
+  text-align: center;
+  padding: 1rem 0;
+  margin-top: 2rem;
+  border-top: 1px solid #ddd;
+}
+@media (max-width: 700px) {
+  main {
+    max-width: 98vw;
+    padding: 0.5rem;
+  }
+  .products {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  .product {
+    width: 96vw;
+  }
+}
   </style>
 </head>
 <body>
