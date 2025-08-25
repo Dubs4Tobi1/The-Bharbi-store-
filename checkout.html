@@ -4,19 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Checkout - The Bharbi Store</title>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js"></script>
+<script src="https://cdn.emailjs.com/dist/email.min.js"></script>
 <style>
-  body { font-family: 'Poppins', sans-serif; background: #fafafa; margin:0; }
-  header { background: #000; color: #fff; padding:1rem; text-align:center; }
-  main { max-width: 800px; margin:auto; padding:1rem; }
-  .cart-item { display:flex; justify-content:space-between; background:#fff; margin:0.5rem 0; padding:0.8rem; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1);}
-  .cart-item img { width:60px; height:60px; border-radius:8px; object-fit:cover; }
-  .cart-info { flex:1; margin-left:1rem; }
-  .cart-info h3{ margin:0; }
-  .done-btn { margin-top:1rem; padding:0.6rem 1.2rem; font-size:1rem; background:#f5a623; border:none; color:#fff; border-radius:8px; cursor:pointer; }
-  .done-btn:hover { background:#d48806; }
-  a { display:inline-block; margin-top:1rem; text-decoration:none; color:#007bff; }
-  .bank-details { background:#fff; padding:1rem; margin:1rem 0; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
-  .upload-proof { margin:1rem 0; }
+  /* ...your existing styles here... */
 </style>
 </head>
 <body>
@@ -24,32 +17,38 @@
   <h1>Checkout</h1>
   <a href="cart.html">Back to Cart</a>
 </header>
-
 <main>
   <h2>Items in your cart</h2>
   <div id="cart-list"></div>
   <h3>Total: ₦<span id="total-price">0</span></h3>
-
-  <!-- Bank details -->
   <div class="bank-details">
     <h3>Payment Details</h3>
     <p><strong>Bank Name:</strong> UBA</p>
     <p><strong>Account Name:</strong> Itunuoluwa Comfort Femi-Asoro</p>
     <p><strong>Account Number:</strong> 2242094371</p>
   </div>
-
-  <!-- Proof of payment upload -->
   <div class="upload-proof">
     <label for="proof">Upload Proof of Payment:</label><br>
     <input type="file" id="proof" accept="image/*">
   </div>
-
   <button class="done-btn" onclick="sendOrder()">Done</button>
 </main>
-
-<script src="https://cdn.emailjs.com/dist/email.min.js"></script>
 <script>
-  emailjs.init("YOUR_EMAILJS_USER_ID"); // Replace with your EmailJS User ID
+  // Firebase setup
+  const firebaseConfig = {
+    apiKey: "AIzaSyD5-sq8L8Ufbzv4TA7L7iGN2l3QUu7aTqg",
+    authDomain: "the-bharbi-store.firebaseapp.com",
+    projectId: "the-bharbi-store",
+    storageBucket: "the-bharbi-store.firebasestorage.app",
+    messagingSenderId: "408548704915",
+    appId: "1:408548704915:web:b828a583e55433f9750366"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const auth = firebase.auth();
+
+  // EmailJS setup
+  emailjs.init("YOUR_EMAILJS_USER_ID"); // <-- Replace with your EmailJS User ID
 
   let cart = JSON.parse(localStorage.getItem("cart")) || [];
   let total = Number(localStorage.getItem("total")) || 0;
@@ -81,28 +80,50 @@
       alert("Cart is empty!");
       return;
     }
-
     const proofInput = document.getElementById("proof");
-    let proofText = proofInput.files.length > 0 ? "Proof uploaded" : "No proof uploaded";
+    let proofBase64 = "";
+    if (proofInput.files.length > 0) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        proofBase64 = event.target.result;
+        saveOrderToFirestoreAndEmail(proofBase64);
+      };
+      reader.readAsDataURL(proofInput.files[0]);
+    } else {
+      saveOrderToFirestoreAndEmail("");
+    }
+  }
 
-    const itemsText = cart.map(item => `${item.name} ×${item.quantity} = ₦${item.price * item.quantity}`).join("\n");
-
-    const emailParams = {
-      to_email: "tfemiasoro@gmail.com",
-      message: `Order Details:\n\n${itemsText}\n\nTotal: ₦${total}\n\n${proofText}\n\nBank Details:\nBank: UBA\nAccount Name: Itunuoluwa Comfort Femi-Asoro\nAccount No: 2242094371`
-    };
-
-    emailjs.send("YOUR_SERVICE_ID","YOUR_TEMPLATE_ID",emailParams)
-      .then(()=>{
-        alert("Order sent successfully!");
-        localStorage.removeItem("cart");
-        localStorage.removeItem("total");
-        window.location.href = "index.html";
-      })
-      .catch(err=>{
-        console.error(err);
-        alert("Failed to send order. Please try again.");
-      });
+  function saveOrderToFirestoreAndEmail(proofBase64) {
+    const user = auth.currentUser;
+    // Save to Firestore
+    db.collection("orders").add({
+      user: user ? user.uid : null,
+      cart: cart,
+      total: total,
+      proof: proofBase64,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      // Prepare order details for email
+      const itemsText = cart.map(item => `${item.name} ×${item.quantity} = ₦${item.price * item.quantity}`).join("\n");
+      const emailParams = {
+        to_email: "tfemiasoro@gmail.com",
+        message: `Order Details:\n\n${itemsText}\n\nTotal: ₦${total}\n\nBank Details:\nBank: UBA\nAccount Name: Itunuoluwa Comfort Femi-Asoro\nAccount No: 2242094371\n\nProof: ${proofBase64 ? "Attached" : "None"}`
+      };
+      // Send via EmailJS
+      emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", emailParams)
+        .then(()=>{
+          alert("Order sent successfully!");
+          localStorage.removeItem("cart");
+          localStorage.removeItem("total");
+          window.location.href = "index.html";
+        })
+        .catch(err=>{
+          alert("Order saved, but failed to send email. Please check your internet and try again.");
+        });
+    }).catch(err => {
+      alert("Failed to send order. Please try again.");
+    });
   }
 </script>
 </body>
